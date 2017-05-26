@@ -1,0 +1,646 @@
+FORMAT: 1A
+HOST: https://payment.yandex.net/api/v2
+
+# Yandex.Checkout API
+
+This API Blueprint demonstrates a real world example documenting a portion of
+[Yandex.Checkout API](https://tech.yandex.ru/money/doc/api/concepts/about-docpage/).
+
+## Available funding sources [/sources{?shopId,shopArticleId,patternId,amount,currency,flow}]
+
+### Available funding sources [GET]
+Яндекса Касса API поддерживает  десятки различных платежных методов и пользовательских сценариев. 
+Используйте этот метод, чтобы получить способы оплаты и сценарии, доступные для вашего заказа.
+
++ Parameters
+    + shopId:767 (int64, optional)
+        Идентификатор магазина
+    + patternId:123 (string, optional)
+            Идентификатор витрины
+    + shopArticleId:456 (int64, optional)
+        Идентификатор товара
+    + amount:10 (number, optional)
+        Сумма платежа
+    + currency:`RUB` (CurrencyCode, optional) - RUB
+        Код валюты платежа
+    + flow:`HttpRedirect` (FlowType, optional)
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer 410012345678901.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+
++ Response 200 (application/json)
+
+    + Attributes (object)
+        + sources (array[SourceInfo], required)
+        
+    + Body
+    
+            {
+              "sources": [
+                {
+                  "source": "BankCard",
+                  "flows": [
+                    "HttpRedirect"
+                  ],
+                  "charge": {
+                    "amount": 100,
+                    "currency": "RUB"
+                  }
+                },
+                {
+                  "source": "Cash",
+                  "flows": [
+                    "HttpRedirect"
+                  ],
+                  "charge": {
+                    "amount": 102,
+                    "currency": "RUB"
+                  },
+                  "fee": {
+                    "amount": 2,
+                    "currency": "RUB"
+                  }
+                },
+                {
+                  "source": "Instrument",
+                  "flows": [
+                    "None"
+                  ],
+                  "charge": {
+                    "amount": 100,
+                    "currency": "RUB"
+                  }
+                }
+              ]
+            }
+
++ Response 400 (application/json)
+
+    + Attributes (object)
+        + error (Error, required)
+            Информация об ошибке
+        
+### Available funding sources 2POST [POST]
+Вариант 2: для POST запроса
+
++ Attributes
+    + One Of
+        + shopId:767 (int64, optional)
+            Идентификатор магазина
+        + patternId:123 (string, optional)
+            Идентификатор витрины
+    + shopArticleId:456 (int64, optional)
+        Идентификатор товара
+    + amount (MonetaryAmount, required)
+        Сумма платежа
+    + flows (array[FlowType], optional)
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 410012345678901.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+            
+    + Body
+    
+            {
+              "shopId": 767,
+              "amount": {
+                "value": 10,
+                "currency": "RUB"
+              },
+              "flows": [
+                "HttpRedirect"
+              ]
+            }
+
+
++ Response 200 (application/json)
+
+    + Attributes (object)
+        + sources (array[SourceInfo], required)
+        
+    + Body
+    
+            {
+              "sources": [
+                {
+                  "source": "BankCard",
+                  "flows": [
+                    "HttpRedirect"
+                  ],
+                  "charge": {
+                    "amount": 100,
+                    "currency": "RUB"
+                  }
+                },
+                {
+                  "source": "Cash",
+                  "flows": [
+                    "HttpRedirect"
+                  ],
+                  "charge": {
+                    "amount": 102,
+                    "currency": "RUB"
+                  },
+                  "fee": {
+                    "amount": 2,
+                    "currency": "RUB"
+                  }
+                },
+                {
+                  "source": "Instrument",
+                  "flows": [
+                    "None"
+                  ],
+                  "charge": {
+                    "amount": 100,
+                    "currency": "RUB"
+                  }
+                }
+              ]
+            }        
+
+## Payments [/payments{?paymentId,shopId,createdFrom,createdTill}]
+
+Структура данных о платеже
+
++ Attributes (Payment)
+
+### Create a payment [POST]
+
++ Attributes (object)
+    + recipient (Recipient, required)
+        Адрес получателя платежа
+    + order (Order, required)
+        Параметры заказа
+    + flows (array, required)
+        Набор поддерживаемых Flow
+    + One Of
+        + source (object, required)
+            + type (enum[string], required)
+                - BankCard
+            + bankCard (object, required)
+                + pan (string, required)
+                    Primary Account Number (PAN)
+                + expiryYear (string, required)
+                    Срок действия, год, YY
+                + expiryMonth (string, required)
+                    Срок действия, месяц, MM
+                + csc (string, required)
+                    CVV2/CVC2 код карты
+                + cardholder (string, optional)
+                    Имя держателя карты
+        + source (object, required)
+            + type (enum[string], required)
+                - PaymentToken
+            + paymentToken (string)
+                Одноразовый токен для проведения оплаты по ранее сохраненной банковской карте
+        + source (object, required)
+            + type (enum[string], required)
+                - ApplePay
+            + applePay (object, required)
+                + paymentData (string)
+                    Содержимое поля paymentData объекта PKPaymentToken, закодированное в Base64.
+        + source (object, required)
+            + type (enum[string], required)
+                - AndroidPay
+            + androidPay (object, required)
+                + paymentMethodToken (string, required)
+                    Ответ метода PaymentToken.getToken(), ответ метода FullWallet.getPaymentMethodToken() приложения на устройстве покупателя.
+                + googleTransactionId (string, required)
+                    Ответ метода FullWallet.getGoogleTransactionId() приложения на устройстве покупателя.
+                + publicKeyHash (string, required)
+                    Значение SHA-256 публичного ключа магазина, кодированное в Base64.
+         + source (object, required)
+            + type (enum[string], required)
+                - Instrument
+            + instrument (object, required)
+                + reference (string)
+                    Cсылка на сохраненные платежные данные покупателя.
+            + csc (string, optional)
+                CVC2/CVV2 код привязанной карты, обязательно вкупе с instrument для привязанных к кошельку карт
+   
++ Request BankCard (application/json)
+
+    + Headers
+    
+            Authorization: Bearer 410012345678901.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+            
+    + Body
+    
+            {
+              "recipient": {
+                "shopId": 12345,
+                "shopArticleId": 6789
+              },
+              "order": {
+                "amount": {
+                  "value": 100,
+                  "currency": "RUB"
+                }
+              },
+              "source": {
+                "type": "BankCard",
+                "bankCard": {
+                  "pan": "5105105105105100",
+                  "expiryYear": "20",
+                  "expiryMonth": "05",
+                  "csc": "012",
+                  "cardholder": "John Smith"
+                }
+              }
+            }
+
++ Request PaymentToken (application/json)
+
+    + Headers
+    
+            Authorization: Bearer 410012345678901.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+            
+    + Body
+    
+            {
+              "recipient": {
+                "shopId": 12345,
+                "shopArticleId": 6789
+              },
+              "order": {
+                "amount": {
+                  "value": 100,
+                  "currency": "RUB"
+                }
+              },
+              "source": {
+                "type": "PaymentToken",
+                "paymentToken": "eyJlbmNyeXB0ZWQiOiJTTnRBaXFjN1FRRFlQWElGK0k1OW1SKzBZWmF5dDVZakVoQzcrY2xRNjg0alo3Q3VnQ0ZjcFIxcEtJVkU0MTBZUG1aQ2ZMamk2eXd1RWNncWg0WXNLWkw4Z0hBWGcrclV6RFRzVXNPN014T2VYc3IyU25DVzRSdlRUeEEwZFZPbTk4c1hrY2tsVFRlTVFKVWN1bDI0M2xLc3hwbHNhcnlnYktKQnVNdFNPUHZ3dEg3VDZJMUZFK3AwUTFLK1ZGeG5BdGtIM3c9PSIsImluaXRWZWN0b3IiOiJ5OFhoR2NiZnhUb0JnT0w2S1ZVZElnPT0iLCJrZXlJZCI6IjIwMTdfMDRfMjdfMSJ9"
+              }
+            }
+
++ Request ApplePay (application/json)
+
+    + Headers
+    
+            Authorization: Bearer 410012345678901.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+            
+    + Body
+    
+            {
+              "recipient": {
+                "shopId": 12345,
+                "shopArticleId": 6789
+              },
+              "order": {
+                "amount": {
+                  "value": 100,
+                  "currency": "RUB"
+                }
+              },
+              "source": {
+                "type": "ApplePay",
+                "applePay": {
+                  "paymentData": "eyJ2ZXJzaW9uIjoiRUNfdjEiLCJkYXRhIjoiQm9mVW9zdUdKbVhocWpHWkJvRmtxb2JMQmFjczh5ZXgwWHM0Um9PaitYUFAwVkIyYjBwckNMQ01mcTFtTFRyWWNGeC9lazdYdU51ak56dFlIeDY0UU9DSWphaEx0SVZxbkZ0d0tZTFFHMXdHd3dOL0E3ZkVXenR4YWl2UWxlMEdmM2g1QzRnY0I3N2RLOTZjcCtLcjBkbG5LeVBudTliRTZJNjJmYTNHMER0MlhteFc1Qy9XN0dzNHFOK2pDaXljSjAvWVdnOWpQd2JSYWdQS0l2OEFDbXRiMnlxbFdqTXcxdDJOZDhzL3oxZlRueVFJU2N1NWErSHNSUnZucGZxeGVPaHZYZW4zZ0tkWDR4dG93bEZoOVVUM29OYTFQQWZabENOTmViKzJzSkU1NFV5WnZLUEdvbTdEN0kwcHJZaS9YNnVVbTZHMTJycnBKTXh6ejJFdmxWemU4WTBMakNQTXoyemxQU3ZnUjZWUlRqS2RyZWxEUlZ5d1RkQ2VnUWwxNHM4SkdIbEFJZUNZV0ZZSVV3PT0iLCJzaWduYXR1cmUiOiJNSUFHQ1NxR1NJYjNEUUVIQXFDQU1JQUNBUUV4RHpBTkJnbGdoa2dCWlFNRUFnRUZBRENBQmdrcWhraUc5dzBCQndFQUFLQ0FNSUlENGpDQ0E0aWdBd0lCQWdJSUpFUHlxQWFkOVhjd0NnWUlLb1pJemowRUF3SXdlakV1TUN3R0ExVUVBd3dsUVhCd2JHVWdRWEJ3YkdsallYUnBiMjRnU1c1MFpXZHlZWFJwYjI0Z1EwRWdMU0JITXpFbU1DUUdBMVVFQ3d3ZFFYQndiR1VnUTJWeWRHbG1hV05oZEdsdmJpQkJkWFJvYjNKcGRIa3hFekFSQmdOVkJBb01Da0Z3Y0d4bElFbHVZeTR4Q3pBSkJnTlZCQVlUQWxWVE1CNFhEVEUwTURreU5USXlNRFl4TVZvWERURTVNRGt5TkRJeU1EWXhNVm93WHpFbE1DTUdBMVVFQXd3Y1pXTmpMWE50Y0MxaWNtOXJaWEl0YzJsbmJsOVZRelF0VUZKUFJERVVNQklHQTFVRUN3d0xhVTlUSUZONWMzUmxiWE14RXpBUkJnTlZCQW9NQ2tGd2NHeGxJRWx1WXk0eEN6QUpCZ05WQkFZVEFsVlRNRmt3RXdZSEtvWkl6ajBDQVFZSUtvWkl6ajBEQVFjRFFnQUV3aFYzN2V2V3g3SWhqMmpkY0pDaElZM0hzTDF2TENnOWhHQ1YyVXIwcFVFYmcwSU8yQkh6UUg2RE14OGNWTVAzNnpJZzFyclYxTy8wa29tSlBud1BFNk9DQWhFd2dnSU5NRVVHQ0NzR0FRVUZCd0VCQkRrd056QTFCZ2dyQmdFRkJRY3dBWVlwYUhSMGNEb3ZMMjlqYzNBdVlYQndiR1V1WTI5dEwyOWpjM0F3TkMxaGNIQnNaV0ZwWTJFek1ERXdIUVlEVlIwT0JCWUVGSlJYMjIvVmRJR0dpWWwyTDM1WGhRZm5tMWdrTUF3R0ExVWRFd0VCL3dRQ01BQXdId1lEVlIwakJCZ3dGb0FVSS9KSnhFK1Q1TzhuNXNUMktHdy9vcnY5TGtzd2dnRWRCZ05WSFNBRWdnRVVNSUlCRURDQ0FRd0dDU3FHU0liM1kyUUZBVENCL2pDQnd3WUlLd1lCQlFVSEFnSXdnYllNZ2JOU1pXeHBZVzVqWlNCdmJpQjBhR2x6SUdObGNuUnBabWxqWVhSbElHSjVJR0Z1ZVNCd1lYSjBlU0JoYzNOMWJXVnpJR0ZqWTJWd2RHRnVZMlVnYjJZZ2RHaGxJSFJvWlc0Z1lYQndiR2xqWVdKc1pTQnpkR0Z1WkdGeVpDQjBaWEp0Y3lCaGJtUWdZMjl1WkdsMGFXOXVjeUJ2WmlCMWMyVXNJR05sY25ScFptbGpZWFJsSUhCdmJHbGplU0JoYm1RZ1kyVnlkR2xtYVdOaGRHbHZiaUJ3Y21GamRHbGpaU0J6ZEdGMFpXMWxiblJ6TGpBMkJnZ3JCZ0VGQlFjQ0FSWXFhSFIwY0RvdkwzZDNkeTVoY0hCc1pTNWpiMjB2WTJWeWRHbG1hV05oZEdWaGRYUm9iM0pwZEhrdk1EUUdBMVVkSHdRdE1Dc3dLYUFub0NXR0kyaDBkSEE2THk5amNtd3VZWEJ3YkdVdVkyOXRMMkZ3Y0d4bFlXbGpZVE11WTNKc01BNEdBMVVkRHdFQi93UUVBd0lIZ0RBUEJna3Foa2lHOTJOa0JoMEVBZ1VBTUFvR0NDcUdTTTQ5QkFNQ0EwZ0FNRVVDSUhLS253K1NveXE1bVhRcjFWNjJjMEJYS3BhSG9kWXU5VFdYRVBVV1BwYnBBaUVBa1RlY2ZXNitXNWwwcjBBRGZ6VENQcTJZdGJTMzl3MDFYSWF5cUJOeThiRXdnZ0x1TUlJQ2RhQURBZ0VDQWdoSmJTKy9PcGphbHpBS0JnZ3Foa2pPUFFRREFqQm5NUnN3R1FZRFZRUUREQkpCY0hCc1pTQlNiMjkwSUVOQklDMGdSek14SmpBa0JnTlZCQXNNSFVGd2NHeGxJRU5sY25ScFptbGpZWFJwYjI0Z1FYVjBhRzl5YVhSNU1STXdFUVlEVlFRS0RBcEJjSEJzWlNCSmJtTXVNUXN3Q1FZRFZRUUdFd0pWVXpBZUZ3MHhOREExTURZeU16UTJNekJhRncweU9UQTFNRFl5TXpRMk16QmFNSG94TGpBc0JnTlZCQU1NSlVGd2NHeGxJRUZ3Y0d4cFkyRjBhVzl1SUVsdWRHVm5jbUYwYVc5dUlFTkJJQzBnUnpNeEpqQWtCZ05WQkFzTUhVRndjR3hsSUVObGNuUnBabWxqWVhScGIyNGdRWFYwYUc5eWFYUjVNUk13RVFZRFZRUUtEQXBCY0hCc1pTQkpibU11TVFzd0NRWURWUVFHRXdKVlV6QlpNQk1HQnlxR1NNNDlBZ0VHQ0NxR1NNNDlBd0VIQTBJQUJQQVhFWVFaMTJTRjFScGVKWUVIZHVpQW91L2VlNjVONEkzOFM1UGhNMWJWWmxzMXJpTFFsM1lOSWs1N3VnajlkaGZPaU10MnUyWnd2c2pvS1lUL1ZFV2pnZmN3Z2ZRd1JnWUlLd1lCQlFVSEFRRUVPakE0TURZR0NDc0dBUVVGQnpBQmhpcG9kSFJ3T2k4dmIyTnpjQzVoY0hCc1pTNWpiMjB2YjJOemNEQTBMV0Z3Y0d4bGNtOXZkR05oWnpNd0hRWURWUjBPQkJZRUZDUHlTY1JQaytUdkorYkU5aWhzUDZLNy9TNUxNQThHQTFVZEV3RUIvd1FGTUFNQkFmOHdId1lEVlIwakJCZ3dGb0FVdTdEZW9WZ3ppSnFraXBuZXZyM3JyOXJMSktzd053WURWUjBmQkRBd0xqQXNvQ3FnS0lZbWFIUjBjRG92TDJOeWJDNWhjSEJzWlM1amIyMHZZWEJ3YkdWeWIyOTBZMkZuTXk1amNtd3dEZ1lEVlIwUEFRSC9CQVFEQWdFR01CQUdDaXFHU0liM1kyUUdBZzRFQWdVQU1Bb0dDQ3FHU000OUJBTUNBMmNBTUdRQ01EclBjb05SRnBteGh2czF3MWJLWXIvMEYrM1pEM1ZOb282KzhaeUJYa0szaWZpWTk1dFpuNWpWUVEyUG5lbkMvZ0l3TWkzVlJDR3dvd1YzYkYzek9EdVFaLzBYZkN3aGJaWlB4bkpwZ2hKdlZQaDZmUnVaeTVzSmlTRmhCcGtQQ1pJZEFBQXhnZ0ZnTUlJQlhBSUJBVENCaGpCNk1TNHdMQVlEVlFRRERDVkJjSEJzWlNCQmNIQnNhV05oZEdsdmJpQkpiblJsWjNKaGRHbHZiaUJEUVNBdElFY3pNU1l3SkFZRFZRUUxEQjFCY0hCc1pTQkRaWEowYVdacFkyRjBhVzl1SUVGMWRHaHZjbWwwZVRFVE1CRUdBMVVFQ2d3S1FYQndiR1VnU1c1akxqRUxNQWtHQTFVRUJoTUNWVk1DQ0NSRDhxZ0duZlYzTUEwR0NXQ0dTQUZsQXdRQ0FRVUFvR2t3R0FZSktvWklodmNOQVFrRE1Rc0dDU3FHU0liM0RRRUhBVEFjQmdrcWhraUc5dzBCQ1FVeER4Y05NVFl3T1RJMk1UVXdNekkzV2pBdkJna3Foa2lHOXcwQkNRUXhJZ1FnMzZOS3JFQ2NTMFJISE5yZ2xuUXJ6V1hmVzVSeFQ0dXNNeEJ5N0hCazk2TXdDZ1lJS29aSXpqMEVBd0lFU0RCR0FpRUFnWHB0RjN6Z2dWRk4zWVRvcnkvdmZBOHNXZHFGSDlwc1Y1RVRvK1AzRGNzQ0lRRHczWVpEMCt5ZE9xUGtFUG9ybkpWeWN2TEZOM3hnQkI3OGozVlBwQkt2U0FBQUFBQUFBQT09IiwiaGVhZGVyIjp7ImVwaGVtZXJhbFB1YmxpY0tleSI6Ik1Ga3dFd1lIS29aSXpqMENBUVlJS29aSXpqMERBUWNEUWdBRTRBVldCUmpUVUcwMlE4TGs2dThGYUhWZkNDVVJQdzZSZGE5RWxDYjc5d2daWW1KWEpPdDVKVG50TFNGc0MvUkhOc09uMnFKVExyNll0dllod2F3MEpnPT0iLCJwdWJsaWNLZXlIYXNoIjoiTTF1R3ZIZVZKSEw3Rjd2MWdYREdWbVU4endtMUYzdXZXaXZJamJJU3cyYz0iLCJ0cmFuc2FjdGlvbklkIjoiYmMyNTVkZTE2ZDhhOGFlMTc5ZTMzN2IwN2ZiNmQyMTFkNzQwYWIzZjM0ZTRjYTc4OTliNzc3ZjUxYWI5NmJiZCJ9fQ=="
+                }
+              }
+            }
+
++ Request AndroidPay (application/json)
+
+    + Headers
+    
+            Authorization: Bearer 410012345678901.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+            
+    + Body
+    
+            {
+              "recipient": {
+                "shopId": 12345,
+                "shopArticleId": 6789
+              },
+              "order": {
+                "amount": {
+                  "value": 100,
+                  "currency": "RUB"
+                }
+              },
+              "source": {
+                "type": "AndroidPay",
+                "androidPay": {
+                  "paymentMethodToken": "eyJlbmNyeXB0ZWRNZXNzYWdlIjoiWlc1amNubHdkR1ZrVFdWemMyRm5aUT09IiwiZXBoZW1lcmFsUHVibGljS2V5IjoiWlhCb1pXMWxjbUZzVUhWaWJHbGpTMlY1IiwidGFnIjoiYzJsbmJtRjBkWEpsIn0K",
+                  "googleTransactionId": "0.G.123456789012345",
+                  "publicKeyHash": "h0KPxSKAPTEGXnvOPPA/5HUJZjHl4Hu9eg/eYMTPJcc="
+                }
+              }
+            }
+
++ Request Instrument (application/json)
+
+    + Headers
+    
+            Authorization: Bearer 410012345678901.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+            
+    + Body
+    
+            {
+              "recipient": {
+                "shopId": 12345,
+                "shopArticleId": 6789
+              },
+              "order": {
+                "amount": {
+                  "value": 100,
+                  "currency": "RUB"
+                }
+              },
+              "source": {
+                "type": "Instrument",
+                "instrument": {
+                  "reference": "orderId:1e3aeae8-160b-50c6-9bcf-57d82f518001"
+                },
+                "csc": "012"
+              }
+            }
+            
++ Response 200 (application/json)
+
+    + Attributes (object)
+        + One Of
+            + payment (Payment, required)
+                Информация о платеже
+            + error (Error, required)
+                Информация об ошибке
+        + payment (Payment, required)
+            Информация о платеже
+        + error (Error, required)
+            Информация об ошибке
+
+    + Body
+
+            {
+              "payment": {
+                "paymentId": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
+                "status": "Success",
+                "created": "2015-19-11T17:05:07+03:00",
+                "authorized": "2015-19-11T17:05:07+03:00",
+                "order": {
+                  "amount": {
+                    "value": 100,
+                    "currency": "RUB"
+                  }
+                },
+                "source": "BankCard",
+                "flow": "None",
+                "paid": true,
+                "captured": false,
+                "receiptRegistered": "Pending"
+              }
+            }
+
++ Response 400 (application/json)
+
+    + Attributes (object)
+        + error (Error, required)
+            Информация об ошибке
+
+    + Body
+
+            {
+              "error": {
+                "code": "IllegalParameter",
+                "parameterName": "order.amount.currency"
+              }
+            }
+
+### Lookup payments [GET]
+
++ Parameters
+    + paymentId:`b80357ac-0c7e-46f9-8058-5a9e9a993800` (string, optional)
+        Идентификатор платежа
+    + shopId:767 (int64, optional)
+        Идентификатор платежа
+    + createdFrom (string, optional)
+    + createdTill (string, optional)
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer 410012345678901.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+
++ Response 200 (application/json)
+
+    + Attributes (object)
+        + payments (array[Payment], required)
+        
++ Response 400 (application/json)
+
+    + Attributes (object)
+        + error (Error, required)
+        
+
+## Data Structures
+
+### int64 (number)
+Целое число, 64 bit
+
+### decimal (number)
+Дробное число с фиксированной точкой
+
+### string64 (string)
+Строка длиной до 64 символов
+
+### FlowType (enum[string])
+Тип пользовательского процесса подтверждения платежа
+#### Members
+- HttpRedirect
+- Otp
+- Waiting
+- Deeplink
+- None
+
+### SourceType (enum[string])
+Тип источника средств для проведения платежа
+#### Members
+- Wallet
+- BankCard
+- PaymentToken
+- Instrument
+- Sberbank
+- Cash
+- MobileNetworkOperator
+- ApplePay
+- SamsungPay
+- AndroidPay
+- Qiwi
+- WebMoney
+- AlfaBank
+
+### Recipient (object)
+#### Properties
++ shopId (int64, required) - 2345
+    ShopId
++ shopArticleId (int64, optional) - 6789
+    An optional shopArticleId
+
+### CurrencyCode (enum)
+ISO-4217 3-alpha currency symbol (код валюты)
+#### Members
+- `RUB`
+- `USB`
+- `EUR`
+
+### MonetaryAmount (object)
+    Сумма определенная в валюте
+#### Properties
++ value (decimal, required) - 10.01
+Сумма
++ currency (CurrencyCode, required) - RUB
+ISO-4217 3-alpha currency symbol (код валюты)
+
+### Payer (object)
+Информация известная о покупателе
+#### Properties
++ phone (string, optional) - 79219538416
+    Номер телефона в формате ITU-T E.164
++ email (string, optional) - romanvt@yamoney.ru
+    E-mail покупателя
+
+### Order (object)
+Параметры заказа
+#### Properties
++ amount (MonetaryAmount, required)
++ customerId (string64, optional)
+    Идентификатор покупателя в системе магазина, например логин игрока или другой идентификатор учетной записи.
++ parameters (object, optional)
+    Дополнительные параметры заказа, указанные магазином
+
+### Instrument (object)
+Cохраненные платежные данные покупателя
+#### Properties
++ title (string, required)
+    Обозначение способа оплаты, которое увидит покупатель. Например, маскированный номер банковской карты, номер кошелька или название привязанной карты
++ reference (string, required)
+    Cсылка на сохраненные платежные данные покупателя.
+
+### HttpRedirectParameters
+Параметры для HttpRedirect
+#### Properties
++ successUri (string, required)
+Адрес возврата при успехе
++ failUri (string, required)
+Адрес возврата при ошибке
+
+### PaymentToken (string)
+Одноразовый токен для проведения оплаты по ранее сохраненной банковской карте
+
+### BankCard (object)
+#### Properties
++ pan (string, required)
+Primary Account Number (PAN)
++ expiryYear (string, required)
+Срок действия, год, YY
++ expiryMonth (string, required)
+Срок действия, месяц, MM
++ csc (string, required)
+CVV2/CVC2 код карты
++ cardholder (string, optional)
+Имя держателя карты
+
+### AndroidPay (object)
+Оплата AndroidPay
+#### Properties
++ paymentMethodToken (string, required)
+Ответ метода PaymentToken.getToken(), ответ метода FullWallet.getPaymentMethodToken() приложения на устройстве покупателя.
++ googleTransactionId (string, required)
+Ответ метода FullWallet.getGoogleTransactionId() приложения на устройстве покупателя.
++ publicKeyHash (string, required)
+Значение SHA-256 публичного ключа магазина, кодированное в Base64.
+
+### SourceInfo (object)
+Информация о доступном способе оплаты
+#### Properties
++ sourceType (SourceType, required)
+Источник оплаты
++ flows (array[FlowType], required)
+Список возможных Flow для проведения платежа
++ charge (MonetaryAmount, required)
+Сумма к оплате
++ fee (MonetaryAmount, optional)
+Сумма комиссии с покупателя, не входит в номинальную стоимость заказа.
+Поле присутствует только если есть комиссия с покупателя
+
+### Error (object)
+Информация об ошибке
+#### Properties
++ code (enum[string], required)
+Код ошибки
+    + Members
+        - IllegalHeader
+        - IllegalParameter
+        - SyntaxError
+        - OrderRefused
+        - AuthorizationRejected
+        - AlreadyAuthorized
+        - InappropriateStatus
+        - OrderExpired
+        - IdentificationRequired
+        - RecipientAccountClosed
+        - InsufficientFunds
+        - OperationNotSupported
+        - PartialRefundNotAllowed
+        - PayerNotFound
+        - IntervalTooLarge
+        - OrderDuplication
+        - AmountRemainderTooLow
+        - InvalidToken
+        - SourceNotAllowed
+        - MethodNotAllowed
+        - RecipientNotAllowed
+        - InstrumentNotAllowed
+        - OperationForbidden
+        - InvalidScope
+        - ParameterNotAllowed
+        - TechnicalError
++ parameterName (string, optional)
+Наименование и путь параметра, содержащего некорректное значение
++ description (string, optional)
+Дополнительное текстовое пояснение ошибки
++ nextRetry (int64, optional)
+Рекомендуемое время спустя которое следует повторить запрос
+
+### Status (enum[string])
+Состояние платежа или другой операции
+#### Members
+- Succeess
+- Pending
+- Canceled
+
+### Payment (object)
+#### Properties
++ paymentId: `b80357ac-0c7e-46f9-8058-5a9e9a993800` (string, required)
+    Идентификатор платежа
++ status (Status, required)
+    Состояние платежа
++ order (Order, required)
+    Параметры заказа
++ source (SourceType, required)
+    Способ оплаты
++ flow (FlowType, required)
+    Способ подтверждения платежа
++ created (string, required)
+    Время создания платежа
++ authorized (string, optional)
+    Время авторизации платежа
++ paid (boolean, required)
+    Платеж оплачен покупателем
++ captured (boolean, required)
+    Платеж подтвержден магазином
++ receiptRegistered (enum[string], optional)
+    Статус печати фискального чека
+    + Members
+        - Success
+        - Pending
+        - Canceled
