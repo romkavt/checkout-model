@@ -343,7 +343,7 @@ This API Blueprint demonstrates a real world example documenting a portion of
               "payment": {
                 "paymentId": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
                 "status": "pending",
-                "createdDate": "2017-08-11T17:05:07+03:00",
+                "createdAt": "2017-08-11T17:05:07+03:00",
                 "order": {
                   "shopId": 123
                   "amount": {
@@ -454,7 +454,7 @@ This API Blueprint demonstrates a real world example documenting a portion of
             {
                 "paymentId": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
                 "status": "succeeded",
-                "createdDate": "2017-08-11T17:05:07+03:00",
+                "createdAt": "2017-08-11T17:05:07+03:00",
                 "order": {
                     "amount": {
                         "value": 100,
@@ -492,7 +492,7 @@ This API Blueprint demonstrates a real world example documenting a portion of
             {
                 "paymentId": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
                 "status": "canceled",
-                "createdDate": "2017-08-11T17:05:07+03:00",
+                "createdAt": "2017-08-11T17:05:07+03:00",
                 "order": {
                     "amount": {
                         "value": 100,
@@ -551,8 +551,8 @@ This API Blueprint demonstrates a real world example documenting a portion of
                 "paymentId": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
                 "amount": 100,
                 "currency": "RUB",
-                "createdDate": "2017-08-11T17:05:07+03:00",
-                "processedDate": "2017-08-11T17:10:07+03:00"
+                "createdAt": "2017-08-11T17:05:07+03:00",
+                "processedAt": "2017-08-11T17:10:07+03:00"
             }
 
 ### Lookup refunds [GET]
@@ -590,8 +590,8 @@ This API Blueprint demonstrates a real world example documenting a portion of
                     "paymentId": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
                     "amount": 1000,
                     "currency": "RUB",
-                    "createdDate": "2017-08-11T17:05:07+03:00",
-                    "processedDate": "2017-08-11T17:10:07+03:00"
+                    "createdAt": "2017-08-11T17:05:07+03:00",
+                    "processedAt": "2017-08-11T17:10:07+03:00"
                 }],
                 
             }
@@ -758,13 +758,13 @@ Cохраненный источник средств
 + paymentId: `b80357ac-0c7e-46f9-8058-5a9e9a993800` (string, required) - идентификатор платежа
 + status (Status, required) - состояние платежа
 + order (Order, required) - параметры заказа
-+ createdDate: `2017-08-11T17:05:07+03:00` (Timestamp, required) - время создания платежа
++ createdAt: `2017-08-11T17:05:07+03:00` (Timestamp, required) - время создания платежа
 + sourceType (SourceType, required) - источник средств
 + charge (MonetaryAmount, optional) - сумма к списанию с источника средств. Выдается, если есть комиссия с плательщика
 + flow (FlowType, optional) - способ подтверждения платежа, если требуется дополнительное подтверждение
 + redirectUrl (string, optional) - url для редиректа. Выдается при flow=redirect
 + nextRetry: 1000 (number, optional)
-+ processedDate: `2017-08-11T17:10:07+03:00` (Timestamp, optional) - время успешного завершения платежа
++ processedAt: `2017-08-11T17:10:07+03:00` (Timestamp, optional) - время успешного завершения платежа
 + income (MonetaryAmount, optional) - сумма к перечислению на счет мерчанта. Появляется после успешного завершения платежа
 + cardAuthorization (object, optional) - результат авторизации карты. Может присутствовать при sourceType=BankCard.
 + paid (boolean, required) - платеж оплачен покупателем
@@ -773,12 +773,12 @@ Cохраненный источник средств
 + refunds (array[Refund], optional) - список возвратов
 
 ### Refund (object)
-+ refundId: '6c9da148-af45-4113-83fb-c35b54ee0b40' (string, required)
++ refundId: `6c9da148-af45-4113-83fb-c35b54ee0b40` (string, required)
 + status (Status, required) - статус возврата
-+ paymentId: 'b80357ac-0c7e-46f9-8058-5a9e9a993800' (string, required)
++ paymentId: `b80357ac-0c7e-46f9-8058-5a9e9a993800` (string, required)
 + amount (MonetaryAmount, required) - сумма возврата
-+ createdDate: `2017-08-11T17:05:07+03:00` (Timestamp, required)
-+ processedDate: `2017-08-11T17:10:07+03:00` (Timestamp, optional)
++ createdAt: `2017-08-11T17:05:07+03:00` (Timestamp, required)
++ processedAt: `2017-08-11T17:10:07+03:00` (Timestamp, optional)
 + nextRetry: 1000 (number, optional)
 
 ### Timestamp (string)
