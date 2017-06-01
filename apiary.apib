@@ -1,23 +1,23 @@
 FORMAT: 1A
-HOST: https://payment.yandex.net/api/v2
+HOST: https://payment.yandex.net/api/v3
 
 # Yandex.Checkout API
 
 This API Blueprint demonstrates a real world example documenting a portion of
 [Yandex.Checkout API](https://tech.yandex.ru/money/doc/api/concepts/about-docpage/).
 
-## Available sources [/sources{?shopId,productGroup,amount,currency,flow}]
+## Available sources [/sources{?shop_id,product_id,amount,currency,flows}]
 
 ### Available funding sources [GET]
 Яндекс.Касса поддерживает десятки способов оплаты и различные пользовательские сценарии. 
 Используйте этот метод, чтобы получить способы оплаты и сценарии, доступные для вашего заказа.
 
 + Parameters
-    + shopId:123 (string, optional) - идентификатор магазина, выданный Яндекс.Кассой
-    + productGroup:456 (string, optional) - идентификатор группы товаров, выданный Яндекс.Кассой
+    + shop_id:123 (string, optional) - идентификатор магазина, выданный Яндекс.Кассой. При отсутствии определяется из настроек клиента
+    + product_id:456 (string, optional) - идентификатор группы товаров, выданный Яндекс.Кассой
     + amount:100 (number, optional) - сумма платежа
     + currency:RUB (CurrencyCode, optional) - валюта платежа
-    + flow:redirect (FlowType, optional) - сценарий подтверждения платежа
+    + flows:redirect (FlowType, optional) - сценарий подтверждения платежа
 
 + Request
 
@@ -35,31 +35,27 @@ This API Blueprint demonstrates a real world example documenting a portion of
             {
               "sources": [
                 {
-                  "sourceType": "bankCard",
+                  "source_type": "bank_card",
                   "flows": [
                     "redirect"
                   ],
-                  "charge": {
-                    "amount": 100,
-                    "currency": "RUB"
-                  }
+                  "charge": 100,
+                  "currency": "RUB"
                 },
                 {
-                  "sourceType": "cash",
+                  "source_type": "cash",
                   "flows": [
                     "redirect"
                   ],
-                  "charge": {
-                    "amount": 102,
-                    "currency": "RUB"
-                  },
+                  "charge": 102,
+                  "currency": "RUB",
                   "fee": {
                     "amount": 2,
                     "currency": "RUB"
                   }
                 }
               ]
-            }
+            }            
 
 + Response 400 (application/json)
 
@@ -71,8 +67,8 @@ This API Blueprint demonstrates a real world example documenting a portion of
 Вариант 2: для POST запроса
 
 + Attributes
-    + shopId:123 (string, optional) - идентификатор магазина, выданный Яндекс.Кассой
-    + productGroup:456 (string, optional) - идентификатор группы товаров, выданный Яндекс.Кассой
+    + shop_id:123 (string, optional) - идентификатор магазина, выданный Яндекс.Кассой
+    + product_id:456 (string, optional) - идентификатор группы товаров, выданный Яндекс.Кассой
     + amount (MonetaryAmount, required) - сумма платежа
     + flows (array[FlowType], optional) - допустимые сценарии подтверждения платежа
 
@@ -86,7 +82,7 @@ This API Blueprint demonstrates a real world example documenting a portion of
     + Body
     
             {
-              "shopId": 123,
+              "shop_id": "123",
               "amount": {
                 "value": 100,
                 "currency": "RUB"
@@ -108,7 +104,7 @@ This API Blueprint demonstrates a real world example documenting a portion of
             {
               "sources": [
                 {
-                  "sourceType": "yandexWallet",
+                  "source_type": "wallet",
                   "flows": [
                     "redirect",
                     "wait"
@@ -119,7 +115,7 @@ This API Blueprint demonstrates a real world example documenting a portion of
                   }
                 },
                 {
-                  "sourceType": "bankCard",
+                  "source_type": "bank_card",
                   "flows": [
                     "redirect"
                   ],
@@ -131,9 +127,9 @@ This API Blueprint demonstrates a real world example documenting a portion of
                     "amount": 2,
                     "currency": "RUB"
                   }
-                }
+                },
                 {
-                  "sourceType": "mobileBalance",
+                  "source_type": "mobile_balance",
                   "flows": [
                     "wait"
                   ],
@@ -147,9 +143,9 @@ This API Blueprint demonstrates a real world example documenting a portion of
                   }
                 }
               ]
-            }        
+            }                    
 
-## Payments [/payments{?paymentId,shopId,createdFrom,createdTill,processedFrom,processedTill,status}]
+## Payments [/payments{?payment_id,shop_id,created_from,created_till,processed_from,processed_till,status}]
 
 Структура данных платежа
 
@@ -161,30 +157,32 @@ This API Blueprint demonstrates a real world example documenting a portion of
 + Attributes (object)
     + order (Order, required) - параметры заказа
     + payer (Payer, optional) - сведения о плательщике
+    + metadata (object, optional) - произвольные дополнительные параметры для сохранения в деталях платежа
     + One Of
         + instrument (object, optional) - ранее сохраненное платежное средство
             + id (string, required) - идентификатор источника, выданный Яндекс.Кассой
             + csc (number, optional) - CVC2/CVV2 код привязанной карты. Обязателен при платеже картой, привязанной к кошельку
         + source (object, optional) - новый источник средств
             + type (SourceType, required) - тип источника
-            + save (boolean, optional) - (для type=bankCard, yandexWallet)
+            + save (boolean, optional) - (для type=bank_card, wallet)
                 сохранить источник для последующих платежей. По умолчанию false
-            + cardDetails (CardDetails, optional) - (для type=bankCard)
+            + card_details (CardDetails, optional)
+                для type=bank_card
                 данные банковской карты. Их передача требует сертификата PCI DSS, при его отсутствии следует передавать cardToken (см. токенизация) или поддерживать flow=redirect для ввода данных карты на защищенных страницах Яндекс.Кассы.
-            + cardToken (string, optional) - (для type=bankCard)
+            + card_token (string, optional) - (для type=bank_card)
                 выданный Яндекс.Кассой разовый токен, заменяющий данные банковской карты
-            + force3DS  (boolean, optional) - (для type=bankCard)
-                требовать обязательного прохождения 3DSecure при авторизации карты. По умолчанию false
-            + applePayData (ApplePayData, optional) - (required для type=applePay)
+            + force_3d_secure  (boolean, optional) - (для type=bank_card)
+                требовать обязательного прохождения 3-D Secure при авторизации карты. По умолчанию false
+            + apple_pay_data (ApplePayData, optional) - (required для type=apple_pay)
                 данные для оплаты Apple Pay
-            + androidPayData (AndroidPayData, optional) - (required для type=androidPay)
+            + android_pay_data (AndroidPayData, optional) - (required для type=android_pay)
                 данные для оплаты Android Pay
     + flows (array[FlowType], optional) - допустимые сценарии подтверждения оплаты. Если не переданы, используется дефолтовый сценарий для данного источника
-    + redirectParams (object, optional) - (required для flow=redirect) параметры редиректа
-        + successUrl (string, required) - адрес возврата при успехе
-        + failUrl (string, required) - адрес возврата при ошибке
-        + iFrame (boolean, optional) - признак, что страница будет отображаться в iFrame. По умолчанию false
-    + autoCapture (boolean, optional) - автоматически принять поступившую оплату. По умолчанию false
+    + redirect_params (object, optional) - (required для flow=redirect) параметры редиректа
+        + return_url (string, required) - адрес возврата
+        + fail_url (string, required) - адрес возврата при ошибке
+        + i_frame (boolean, optional) - признак, что страница будет отображаться в iFrame. По умолчанию false
+    + auto_capture (boolean, optional) - автоматически принять поступившую оплату. По умолчанию false
     
 + Request BankCard with card details (application/json)
 
@@ -197,40 +195,40 @@ This API Blueprint demonstrates a real world example documenting a portion of
     
             {
               "order": {
-                "shopId": 123,
-                "productGroup": 456,
+                "shop_id": "123",
+                "product_id": "456",
                 "amount": {
                   "value": 100,
                   "currency": "RUB"
                 }
               },
               "payer": {
-                "phone": 79211234567,
+                "phone": "79211234567",
                 "email": "john@smith.com"
               },
               "source": {
-                "type": "bankCard",
+                "type": "bank_card",
                 "save": true,
-                "cardDetails": {
+                "card_details": {
                   "pan": "5105105105105100",
-                  "expiryYear": "20",
-                  "expiryMonth": "05",
+                  "expiry_year": "20",
+                  "expiry_month": "05",
                   "csc": "012",
                   "cardholder": "John Smith"
                 },
-                "force3DS": true,
+                "force_3D_secure": true
               },
               "flows": [
                 "redirect",
                 "wait"
               ],
-              "redirectParams": {
-                "successUrl": "www.merchant.me/order12345/success",
-                "failUrl": "www.merchant.me/order12345/fail",
-                "iFrame": false
+              "redirect_params": {
+                "return_url": "www.merchant.me/order12345/return",
+                "fail_url": "www.merchant.me/order12345/fail",
+                "i_frame": false
               },
-              "autocapture": false
-            }
+              "auto_capture": false
+            }            
 
 + Request BankCard with redirect flow (application/json)
 
@@ -243,32 +241,32 @@ This API Blueprint demonstrates a real world example documenting a portion of
     
             {
               "order": {
-                "shopId": 123,
-                "productGroup": 456,
+                "shop_id": "123",
+                "product_id": "456",
                 "amount": {
                   "value": 100,
                   "currency": "RUB"
                 }
               },
               "payer": {
-                "phone": 79211234567,
+                "phone": "79211234567",
                 "email": "john@smith.com"
               },
               "source": {
-                "type": "bankCard",
+                "type": "bank_card",
                 "save": true,
-                "force3DS": true,
+                "force_3D_secure": true
               },
               "flows": [
                 "redirect",
                 "wait"
               ],
-              "redirectParams": {
-                "successUrl": "www.merchant.me/order12345/success",
-                "failUrl": "www.merchant.me/order12345/fail",
-                "iFrame": false
+              "redirect_params": {
+                "return_url": "www.merchant.me/order12345/return",
+                "fail_url": "www.merchant.me/order12345/fail",
+                "i_frame": false
               },
-              "autocapture": false
+              "auto_capture": false
             }
 
 + Request ApplePay (application/json)
@@ -282,24 +280,24 @@ This API Blueprint demonstrates a real world example documenting a portion of
     
             {
               "order": {
-                "shopId": 123,
-                "productGroup": 456,
+                "shop_id": "123",
+                "product_id": "456",
                 "amount": {
                   "value": 100,
                   "currency": "RUB"
                 }
               },
               "payer": {
-                "phone": 79211234567,
+                "phone": "79211234567",
                 "email": "john@smith.com"
               },
               "source": {
-                "type": "applePay",
-                "applePayData": {
+                "type": "apple_pay",
+                "apple_pay_data": {
                   "paymentData": "eyJ2ZXJzaW9uIjoiRUNfdjEiLCJkYXRhIjoiQm9mVW9zdUdKbVhocWpHWkJvRmtxb2JMQmFjczh5ZXgwWHM0Um9PaitYUFAwVkIyYjBwckNMQ01mcTFtTFRyWWNGeC9lazdYdU51ak56dFlIeDY0UU9DSWphaEx0SVZxbkZ0d0tZTFFHMXdHd3dOL0E3ZkVXenR4YWl2UWxlMEdmM2g1QzRnY0I3N2RLOTZjcCtLcjBkbG5LeVBudTliRTZJNjJmYTNHMER0MlhteFc1Qy9XN0dzNHFOK2pDaXljSjAvWVdnOWpQd2JSYWdQS0l2OEFDbXRiMnlxbFdqTXcxdDJOZDhzL3oxZlRueVFJU2N1NWErSHNSUnZucGZxeGVPaHZYZW4zZ0tkWDR4dG93bEZoOVVUM29OYTFQQWZabENOTmViKzJzSkU1NFV5WnZLUEdvbTdEN0kwcHJZaS9YNnVVbTZHMTJycnBKTXh6ejJFdmxWemU4WTBMakNQTXoyemxQU3ZnUjZWUlRqS2RyZWxEUlZ5d1RkQ2VnUWwxNHM4SkdIbEFJZUNZV0ZZSVV3PT0iLCJzaWduYXR1cmUiOiJNSUFHQ1NxR1NJYjNEUUVIQXFDQU1JQUNBUUV4RHpBTkJnbGdoa2dCWlFNRUFnRUZBRENBQmdrcWhraUc5dzBCQndFQUFLQ0FNSUlENGpDQ0E0aWdBd0lCQWdJSUpFUHlxQWFkOVhjd0NnWUlLb1pJemowRUF3SXdlakV1TUN3R0ExVUVBd3dsUVhCd2JHVWdRWEJ3YkdsallYUnBiMjRnU1c1MFpXZHlZWFJwYjI0Z1EwRWdMU0JITXpFbU1DUUdBMVVFQ3d3ZFFYQndiR1VnUTJWeWRHbG1hV05oZEdsdmJpQkJkWFJvYjNKcGRIa3hFekFSQmdOVkJBb01Da0Z3Y0d4bElFbHVZeTR4Q3pBSkJnTlZCQVlUQWxWVE1CNFhEVEUwTURreU5USXlNRFl4TVZvWERURTVNRGt5TkRJeU1EWXhNVm93WHpFbE1DTUdBMVVFQXd3Y1pXTmpMWE50Y0MxaWNtOXJaWEl0YzJsbmJsOVZRelF0VUZKUFJERVVNQklHQTFVRUN3d0xhVTlUSUZONWMzUmxiWE14RXpBUkJnTlZCQW9NQ2tGd2NHeGxJRWx1WXk0eEN6QUpCZ05WQkFZVEFsVlRNRmt3RXdZSEtvWkl6ajBDQVFZSUtvWkl6ajBEQVFjRFFnQUV3aFYzN2V2V3g3SWhqMmpkY0pDaElZM0hzTDF2TENnOWhHQ1YyVXIwcFVFYmcwSU8yQkh6UUg2RE14OGNWTVAzNnpJZzFyclYxTy8wa29tSlBud1BFNk9DQWhFd2dnSU5NRVVHQ0NzR0FRVUZCd0VCQkRrd056QTFCZ2dyQmdFRkJRY3dBWVlwYUhSMGNEb3ZMMjlqYzNBdVlYQndiR1V1WTI5dEwyOWpjM0F3TkMxaGNIQnNaV0ZwWTJFek1ERXdIUVlEVlIwT0JCWUVGSlJYMjIvVmRJR0dpWWwyTDM1WGhRZm5tMWdrTUF3R0ExVWRFd0VCL3dRQ01BQXdId1lEVlIwakJCZ3dGb0FVSS9KSnhFK1Q1TzhuNXNUMktHdy9vcnY5TGtzd2dnRWRCZ05WSFNBRWdnRVVNSUlCRURDQ0FRd0dDU3FHU0liM1kyUUZBVENCL2pDQnd3WUlLd1lCQlFVSEFnSXdnYllNZ2JOU1pXeHBZVzVqWlNCdmJpQjBhR2x6SUdObGNuUnBabWxqWVhSbElHSjVJR0Z1ZVNCd1lYSjBlU0JoYzNOMWJXVnpJR0ZqWTJWd2RHRnVZMlVnYjJZZ2RHaGxJSFJvWlc0Z1lYQndiR2xqWVdKc1pTQnpkR0Z1WkdGeVpDQjBaWEp0Y3lCaGJtUWdZMjl1WkdsMGFXOXVjeUJ2WmlCMWMyVXNJR05sY25ScFptbGpZWFJsSUhCdmJHbGplU0JoYm1RZ1kyVnlkR2xtYVdOaGRHbHZiaUJ3Y21GamRHbGpaU0J6ZEdGMFpXMWxiblJ6TGpBMkJnZ3JCZ0VGQlFjQ0FSWXFhSFIwY0RvdkwzZDNkeTVoY0hCc1pTNWpiMjB2WTJWeWRHbG1hV05oZEdWaGRYUm9iM0pwZEhrdk1EUUdBMVVkSHdRdE1Dc3dLYUFub0NXR0kyaDBkSEE2THk5amNtd3VZWEJ3YkdVdVkyOXRMMkZ3Y0d4bFlXbGpZVE11WTNKc01BNEdBMVVkRHdFQi93UUVBd0lIZ0RBUEJna3Foa2lHOTJOa0JoMEVBZ1VBTUFvR0NDcUdTTTQ5QkFNQ0EwZ0FNRVVDSUhLS253K1NveXE1bVhRcjFWNjJjMEJYS3BhSG9kWXU5VFdYRVBVV1BwYnBBaUVBa1RlY2ZXNitXNWwwcjBBRGZ6VENQcTJZdGJTMzl3MDFYSWF5cUJOeThiRXdnZ0x1TUlJQ2RhQURBZ0VDQWdoSmJTKy9PcGphbHpBS0JnZ3Foa2pPUFFRREFqQm5NUnN3R1FZRFZRUUREQkpCY0hCc1pTQlNiMjkwSUVOQklDMGdSek14SmpBa0JnTlZCQXNNSFVGd2NHeGxJRU5sY25ScFptbGpZWFJwYjI0Z1FYVjBhRzl5YVhSNU1STXdFUVlEVlFRS0RBcEJjSEJzWlNCSmJtTXVNUXN3Q1FZRFZRUUdFd0pWVXpBZUZ3MHhOREExTURZeU16UTJNekJhRncweU9UQTFNRFl5TXpRMk16QmFNSG94TGpBc0JnTlZCQU1NSlVGd2NHeGxJRUZ3Y0d4cFkyRjBhVzl1SUVsdWRHVm5jbUYwYVc5dUlFTkJJQzBnUnpNeEpqQWtCZ05WQkFzTUhVRndjR3hsSUVObGNuUnBabWxqWVhScGIyNGdRWFYwYUc5eWFYUjVNUk13RVFZRFZRUUtEQXBCY0hCc1pTQkpibU11TVFzd0NRWURWUVFHRXdKVlV6QlpNQk1HQnlxR1NNNDlBZ0VHQ0NxR1NNNDlBd0VIQTBJQUJQQVhFWVFaMTJTRjFScGVKWUVIZHVpQW91L2VlNjVONEkzOFM1UGhNMWJWWmxzMXJpTFFsM1lOSWs1N3VnajlkaGZPaU10MnUyWnd2c2pvS1lUL1ZFV2pnZmN3Z2ZRd1JnWUlLd1lCQlFVSEFRRUVPakE0TURZR0NDc0dBUVVGQnpBQmhpcG9kSFJ3T2k4dmIyTnpjQzVoY0hCc1pTNWpiMjB2YjJOemNEQTBMV0Z3Y0d4bGNtOXZkR05oWnpNd0hRWURWUjBPQkJZRUZDUHlTY1JQaytUdkorYkU5aWhzUDZLNy9TNUxNQThHQTFVZEV3RUIvd1FGTUFNQkFmOHdId1lEVlIwakJCZ3dGb0FVdTdEZW9WZ3ppSnFraXBuZXZyM3JyOXJMSktzd053WURWUjBmQkRBd0xqQXNvQ3FnS0lZbWFIUjBjRG92TDJOeWJDNWhjSEJzWlM1amIyMHZZWEJ3YkdWeWIyOTBZMkZuTXk1amNtd3dEZ1lEVlIwUEFRSC9CQVFEQWdFR01CQUdDaXFHU0liM1kyUUdBZzRFQWdVQU1Bb0dDQ3FHU000OUJBTUNBMmNBTUdRQ01EclBjb05SRnBteGh2czF3MWJLWXIvMEYrM1pEM1ZOb282KzhaeUJYa0szaWZpWTk1dFpuNWpWUVEyUG5lbkMvZ0l3TWkzVlJDR3dvd1YzYkYzek9EdVFaLzBYZkN3aGJaWlB4bkpwZ2hKdlZQaDZmUnVaeTVzSmlTRmhCcGtQQ1pJZEFBQXhnZ0ZnTUlJQlhBSUJBVENCaGpCNk1TNHdMQVlEVlFRRERDVkJjSEJzWlNCQmNIQnNhV05oZEdsdmJpQkpiblJsWjNKaGRHbHZiaUJEUVNBdElFY3pNU1l3SkFZRFZRUUxEQjFCY0hCc1pTQkRaWEowYVdacFkyRjBhVzl1SUVGMWRHaHZjbWwwZVRFVE1CRUdBMVVFQ2d3S1FYQndiR1VnU1c1akxqRUxNQWtHQTFVRUJoTUNWVk1DQ0NSRDhxZ0duZlYzTUEwR0NXQ0dTQUZsQXdRQ0FRVUFvR2t3R0FZSktvWklodmNOQVFrRE1Rc0dDU3FHU0liM0RRRUhBVEFjQmdrcWhraUc5dzBCQ1FVeER4Y05NVFl3T1RJMk1UVXdNekkzV2pBdkJna3Foa2lHOXcwQkNRUXhJZ1FnMzZOS3JFQ2NTMFJISE5yZ2xuUXJ6V1hmVzVSeFQ0dXNNeEJ5N0hCazk2TXdDZ1lJS29aSXpqMEVBd0lFU0RCR0FpRUFnWHB0RjN6Z2dWRk4zWVRvcnkvdmZBOHNXZHFGSDlwc1Y1RVRvK1AzRGNzQ0lRRHczWVpEMCt5ZE9xUGtFUG9ybkpWeWN2TEZOM3hnQkI3OGozVlBwQkt2U0FBQUFBQUFBQT09IiwiaGVhZGVyIjp7ImVwaGVtZXJhbFB1YmxpY0tleSI6Ik1Ga3dFd1lIS29aSXpqMENBUVlJS29aSXpqMERBUWNEUWdBRTRBVldCUmpUVUcwMlE4TGs2dThGYUhWZkNDVVJQdzZSZGE5RWxDYjc5d2daWW1KWEpPdDVKVG50TFNGc0MvUkhOc09uMnFKVExyNll0dllod2F3MEpnPT0iLCJwdWJsaWNLZXlIYXNoIjoiTTF1R3ZIZVZKSEw3Rjd2MWdYREdWbVU4endtMUYzdXZXaXZJamJJU3cyYz0iLCJ0cmFuc2FjdGlvbklkIjoiYmMyNTVkZTE2ZDhhOGFlMTc5ZTMzN2IwN2ZiNmQyMTFkNzQwYWIzZjM0ZTRjYTc4OTliNzc3ZjUxYWI5NmJiZCJ9fQ=="
                 }
               },
-              "autocapture": false
+              "auto_capture": false
             }
 
 + Request Instrument (application/json)
@@ -313,23 +311,22 @@ This API Blueprint demonstrates a real world example documenting a portion of
     
             {
               "order": {
-                "shopId": 123,
-                "productGroup": 456,
+                "shopId": "123",
+                "product_id": "456",
                 "amount": {
                   "value": 100,
                   "currency": "RUB"
                 }
               },
               "payer": {
-                "phone": 79211234567,
+                "phone": "79211234567",
                 "email": "john@smith.com"
               },
               "instrument": {
                 "id": "5af9e5a9bf800"
               },
-              "flows": [
-              ],
-              "autocapture": false
+              "flows": [],
+              "auto_capture": false
             }
             
 + Response 200 (application/json)
@@ -341,55 +338,42 @@ This API Blueprint demonstrates a real world example documenting a portion of
 
             {
               "payment": {
-                "paymentId": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
+                "payment_id": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
                 "status": "pending",
-                "createdAt": "2017-08-11T17:05:07+03:00",
+                "created_at": "2017-08-11T17:05:07+03:00",
                 "order": {
-                  "shopId": 123
+                  "shop_id": "123",
                   "amount": {
                     "value": 100,
                     "currency": "RUB"
                   }
                 },
-                "sourceType": "bankCard",
-                "cardAuthorization": {
-                    "responseCode": "00",
-                    "rrn": "603668680243",
-                    "authId": "062467",
-                    "eci": "02"
+                "source_type": "bank_card",
+                "card_authorization": {
+                  "response_code": "00",
+                  "rrn": "603668680243",
+                  "auth_id": "062467",
+                  "eci": "02"
                 },
                 "paid": true,
                 "captured": false,
-                "receiptRegistered": "pending"
+                "receipt_registered": "pending"
               }
             }
-
-+ Response 202 (application/json)
-
-    + Attributes (object)
-        + flow (FlowType, required) - сценарий подтверждения платежа
-        + redirectUrl (string, optional) - URL для редиректа. Выдается при flow=redirect
-        
-    + Body
-
-            {
-              "flow": "redirect",
-              "redirectUrl": "https://payment.yandex.net/api/v2/payments/b80357ac-0c7e-46f9-8058-5a9e9a993800/authorize"
-            }
-
 
 + Response 400 (application/json)
 
     + Attributes (object)
         + error (Error, required)
             Информация об ошибке
+        + payment (Payment, optional) - информация о платеже
 
     + Body
 
             {
               "error": {
-                "code": "IllegalParameter",
-                "parameterName": "order.amount.currency"
+                "code": "illegal_parameter",
+                "parameter_name": "order.amount.currency"
               }
             }
 
@@ -397,12 +381,12 @@ This API Blueprint demonstrates a real world example documenting a portion of
 Получить информацию о платежах
 
 + Parameters
-    + paymentId:`b80357ac-0c7e-46f9-8058-5a9e9a993800` (string, optional) - идентификатор платежа
-    + shopId:123 (string, optional)  - идентификатор магазина
-    + createdFrom (string, optional)
-    + createdTill (string, optional)
-    + processedFrom (string, optional)
-    + processedTill (string, optional)
+    + payment_id:`b80357ac-0c7e-46f9-8058-5a9e9a993800` (string, optional) - идентификатор платежа
+    + shop_id:123 (string, optional)  - идентификатор магазина
+    + created_from (string, optional)
+    + created_till (string, optional)
+    + processed_from (string, optional)
+    + processed_till (string, optional)
     + status (Status, optional)
 
 + Request
@@ -416,7 +400,7 @@ This API Blueprint demonstrates a real world example documenting a portion of
 
     + Attributes (object)
         + payments (array[Payment], required)
-        + nextPage (string, optional)
+        + next_page (string, optional)
         
 + Response 400 (application/json)
 
@@ -424,7 +408,7 @@ This API Blueprint demonstrates a real world example documenting a portion of
         + error (Error, required)
         
         
-### Capture [/payments/{paymentId}/capture]
+### Capture [/payments/{payment_id}/capture]
 
 #### Capture a payment [POST]
 Принять оплату
@@ -452,30 +436,30 @@ This API Blueprint demonstrates a real world example documenting a portion of
     + Body
 
             {
-                "paymentId": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
-                "status": "succeeded",
-                "createdAt": "2017-08-11T17:05:07+03:00",
-                "order": {
-                    "amount": {
-                        "value": 100,
-                        "currency": "RUB"
-                    },
-                    "items": []
+              "payment_id": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
+              "status": "succeeded",
+              "created_at": "2017-08-11T17:05:07+03:00",
+              "order": {
+                "amount": {
+                  "value": 100,
+                  "currency": "RUB"
                 },
-                "source": "bankCard",
-                "cardAuthorization": {
-                    "responseCode": "00",
-                    "rrn": "603668680243",
-                    "authId": "062467",
-                    "eci": "02"
-                },
-                "paid": true,
-                "captured": true,
-                "receiptRegistration": "succeeded"
+                "items": []
+              },
+              "source": "bank_card",
+              "card_authorization": {
+                "response_code": "00",
+                "rrn": "603668680243",
+                "auth_id": "062467",
+                "eci": "02"
+              },
+              "paid": true,
+              "captured": true,
+              "receipt_registration": "succeeded"
             }
 
 
-### Cancel [/payments/{paymentId}/cancel]
+### Cancel [/payments/{payment_id}/cancel]
 
 #### Отмена платежа [POST]
 
@@ -490,30 +474,30 @@ This API Blueprint demonstrates a real world example documenting a portion of
     + Body
 
             {
-                "paymentId": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
-                "status": "canceled",
-                "createdAt": "2017-08-11T17:05:07+03:00",
-                "order": {
-                    "amount": {
-                        "value": 100,
-                        "currency": "RUB"
-                    },
-                    "items": []
+              "payment_id": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
+              "status": "canceled",
+              "created_at": "2017-08-11T17:05:07+03:00",
+              "order": {
+                "amount": {
+                  "value": 100,
+                  "currency": "RUB"
                 },
-                "source": "bankCard",
-                "cardAuthorization": {
-                    "responseCode": "00",
-                    "rrn": "603668680243",
-                    "authId": "062467",
-                    "eci": "02"
-                },
-                "paid": true,
-                "captured": false,
-                "receiptRegistration": "canceled"
-                "refunds": []
+                "items": []
+              },
+              "source": "bank_card",
+              "card_authorization": {
+                "response_code": "00",
+                "rrn": "603668680243",
+                "auth_id": "062467",
+                "eci": "02"
+              },
+              "paid": true,
+              "captured": false,
+              "receipt_registration": "canceled",
+              "refunds": []
             }
 
-## Refunds [/refunds{?paymentId,refundId,shopId,createdFrom,createdTill,processedFrom,processedTill,status}]
+## Refunds [/refunds{?payment_id,refund_id,shop_id,created_from,created_till,processed_from,processed_till,status}]
 Возвраты
 
 + Attributes (Refund)
@@ -522,8 +506,9 @@ This API Blueprint demonstrates a real world example documenting a portion of
 ### Создание возврата [POST]
 
 + Attributes (object)
-    + paymentId: `b80357ac-0c7e-46f9-8058-5a9e9a993800` (string, required)
+    + payment_id: `b80357ac-0c7e-46f9-8058-5a9e9a993800` (string, required)
     + amount (MonetaryAmount, optional) - сумма возврата. Должна быть меньше или равна текущей сумме платежа (сумма исходного платежа за вычетом уже сделанных возвратов). При отсутствии считается равной текущей сумме платежа
+    + metadata (object, optional) - произвольные дополнительные параметры для сохранения в деталях возврата
 
 + Request (application/json)
     + Headers
@@ -538,7 +523,7 @@ This API Blueprint demonstrates a real world example documenting a portion of
                     "value": 100,
                     "currency": "RUB"
                 },
-                "paymentId": "b80357ac-0c7e-46f9-8058-5a9e9a993800"
+                "payment_id": "b80357ac-0c7e-46f9-8058-5a9e9a993800"
             }
 
 + Response 201 (application/json)
@@ -546,26 +531,28 @@ This API Blueprint demonstrates a real world example documenting a portion of
     + Body
 
             {
-                "status": "succeeded",
-                "refundId": "6c9da148-af45-4113-83fb-c35b54ee0b40",
-                "paymentId": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
-                "amount": 100,
-                "currency": "RUB",
-                "createdAt": "2017-08-11T17:05:07+03:00",
-                "processedAt": "2017-08-11T17:10:07+03:00"
+              "status": "succeeded",
+              "refund_id": "6c9da148-af45-4113-83fb-c35b54ee0b40",
+              "payment_id": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
+              "amount": {
+                "value": 100,
+                "currency": "RUB"
+              },
+              "created_at": "2017-08-11T17:05:07+03:00",
+              "processed_at": "2017-08-11T17:10:07+03:00"
             }
 
 ### Lookup refunds [GET]
 Получить информацию о возвратах
 
 + Parameters
-    + paymentId:`b80357ac-0c7e-46f9-8058-5a9e9a993800` (string, optional) - идентификатор платежа
-    + refundId:`6c9da148-af45-4113-83fb-c35b54ee0b40` (string, optional) - идентификатор возврата
-    + shopId:123 (string, optional)  - идентификатор магазина
-    + createdFrom (string, optional)
-    + createdTill (string, optional)
-    + processedFrom (string, optional)
-    + processedTill (string, optional)
+    + payment_id:`b80357ac-0c7e-46f9-8058-5a9e9a993800` (string, optional) - идентификатор платежа
+    + refund_id:`6c9da148-af45-4113-83fb-c35b54ee0b40` (string, optional) - идентификатор возврата
+    + shop_id:123 (string, optional)  - идентификатор магазина
+    + created_from (string, optional)
+    + created_till (string, optional)
+    + processed_from (string, optional)
+    + processed_till (string, optional)
     + status (Status, optional)
 
 + Request
@@ -579,21 +566,24 @@ This API Blueprint demonstrates a real world example documenting a portion of
 
     + Attributes (object)
         + refunds (array[Refund], required)
-        + nextPage (string, optional)
+        + next_page (string, optional)
 
     + Body
 
             {
-                "refunds": [{
-                    "status": "succeeded",
-                    "refundId": "6c9da148-af45-4113-83fb-c35b54ee0b40",
-                    "paymentId": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
-                    "amount": 1000,
-                    "currency": "RUB",
-                    "createdAt": "2017-08-11T17:05:07+03:00",
-                    "processedAt": "2017-08-11T17:10:07+03:00"
-                }],
-                
+              "refunds": [
+                {
+                  "status": "succeeded",
+                  "refund_id": "6c9da148-af45-4113-83fb-c35b54ee0b40",
+                  "payment_id": "b80357ac-0c7e-46f9-8058-5a9e9a993800",
+                  "amount": {
+                    "value": 1000,
+                    "currency": "RUB"
+                  },
+                  "created_at": "2017-08-11T17:05:07+03:00",
+                  "processed_at": "2017-08-11T17:10:07+03:00"
+                }
+              ]
             }
         
 + Response 400 (application/json)
@@ -620,16 +610,16 @@ This API Blueprint demonstrates a real world example documenting a portion of
 ### SourceType (enum[string])
 Тип источника средств
 #### Members
-+ yandexWallet
-+ bankCard
++ wallet
++ bank_card
 + sberbank
 + cash
-+ mobileBalance
-+ applePay
-+ samsungPay
-+ androidPay
++ mobile_balance
++ apple_pay
++ samsung_pay
++ android_pay
 + qiwi
-+ webMoney
++ webmoney
 + alfabank
 
 ### CurrencyCode (enum)
@@ -648,7 +638,7 @@ ISO-4217 3-alpha currency symbol (код валюты)
 ### Payer (object)
 Информация о плательщике
 #### Properties
-+ phone:79219538416 (string, optional) - номер телефона в формате ITU-T E.164. Может использоваться для уточнения источника средств и для подтверждения платежа
++ phone:`79219538416` (string, optional) - номер телефона в формате ITU-T E.164. Может использоваться для уточнения источника средств и для подтверждения платежа
 + email:'test@yamoney.ru' (string, optional) - электронный адрес
 
 ### ItemInfo (object)
@@ -656,18 +646,16 @@ ISO-4217 3-alpha currency symbol (код валюты)
 #### Properties
 + sku (string, required) - артикул товара
 + title:'red rose' (string, optional) - название товара для плательщика
-+ count:1 (decimal, required) - количество товара в заказе
++ qty:1 (decimal, required) - количество товара в заказе
 + price (MonetaryAmount, required) - цена товара
 
 ### Order (object)
 Параметры заказа
 #### Properties
 + amount (MonetaryAmount, required)
-+ shopId:2345 (string, optional) - идентификатор магазина, выданный Яндекс.Кассой. Если не указан, берется из настроек клиента
-+ productGroup:6789 (string, optional) - идентификатор группы товаров, выданный Яндекс.Кассой. Если не выдавался, не нужен.
++ shop_id:2345 (string, optional) - идентификатор магазина, выданный Яндекс.Кассой. Если не указан, берется из настроек клиента
++ product_id:6789 (string, optional) - идентификатор группы товаров, выданный Яндекс.Кассой. Если не выдавался, не нужен.
 + items (array[ItemInfo], optional) - товары, входящие в заказ. Обязательно, если подключена печать чека через Яндекс.Кассу
-+ customerId (string64, optional) - идентификатор покупателя в системе магазина (логин или другой id)
-+ metadata (object, optional) - дополнительные параметры заказа, указанные магазином
 
 ### Instrument (object)
 Cохраненный источник средств
@@ -678,8 +666,8 @@ Cохраненный источник средств
 ### CardDetails (object)
 #### Properties
 + pan (string, required) - полный номер карты (Primary Account Number)
-+ expiryYear (string, required) - год окончания действия, YY
-+ expiryMonth (string, required) - месяц окончания действия, MM
++ expiry_year (string, required) - год окончания действия, YY
++ expiry_month (string, required) - месяц окончания действия, MM
 + csc (string, required) - CVV2/CVC2 код карты
 + cardholder (string, optional) - имя держателя карты
 
@@ -698,7 +686,7 @@ Cохраненный источник средств
 ### SourceInfo (object)
 Информация о доступном способе оплаты
 #### Properties
-+ sourceType (SourceType, required) - источник оплаты
++ source_type (SourceType, required) - источник оплаты
 + flows (array[FlowType], required) - возможные сценарии подтверждения платежа
 + charge (MonetaryAmount, optional) - сумма к оплате
 + fee (MonetaryAmount, optional) - сумма комиссии с покупателя, не входит в номинальную стоимость заказа. Поле присутствует, только если есть комиссия с покупателя
@@ -706,9 +694,9 @@ Cохраненный источник средств
 ### CardAuthorization (object)
 Результат авторизации карты доступном способе оплаты
 #### Properties
-+ responseCode: '00' (string, optional)
++ response_code: '00' (string, optional)
 + rrn: '603668680243' (string, optional)
-+ authId: '062467' (string, optional)
++ auth_id: '062467' (string, optional)
 + eci: '02' (string, optional)
 
 ### Error (object)
@@ -716,70 +704,72 @@ Cохраненный источник средств
 #### Properties
 + code (enum[string], required) - код ошибки
     + Members
-        - IllegalHeader
-        - IllegalParameter
-        - SyntaxError
-        - OrderRefused
-        - AuthorizationRejected
-        - AlreadyAuthorized
-        - InappropriateStatus
-        - OrderExpired
-        - IdentificationRequired
-        - RecipientAccountClosed
-        - InsufficientFunds
-        - OperationNotSupported
-        - PartialRefundNotAllowed
-        - PayerNotFound
-        - IntervalTooLarge
-        - OrderDuplication
-        - AmountRemainderTooLow
-        - InvalidToken
-        - SourceNotAllowed
-        - MethodNotAllowed
-        - RecipientNotAllowed
-        - InstrumentNotAllowed
-        - OperationForbidden
-        - InvalidScope
-        - ParameterNotAllowed
-        - TechnicalError
-+ parameterName (string, optional) - наименование и путь параметра, содержащего некорректное значение
+        - illegal_header
+        - illegal_parameter
+        - syntax_error
+        - order_refused
+        - authorization_rejected
+        - already_authorized
+        - inappropriate_atatus
+        - order_expired
+        - identification_required
+        - recipient_account_closed
+        - insufficient_funds
+        - operation_not_supported
+        - partial_refund_not_allowed
+        - payer_not_found
+        - interval_too_large
+        - order_duplication
+        - amount_remainder_too_low
+        - invalid_token
+        - source_not_allowed
+        - method_not_allowed
+        - recipient_not_allowed
+        - instrument_not_allowed
+        - operation_forbidden
+        - invalid_scope
+        - parameter_not_allowed
+        - technical_error
++ parameter_name (string, optional) - наименование и путь параметра, содержащего некорректное значение
 + description (string, optional) - дополнительное текстовое пояснение ошибки
-+ nextRetry (number, optional) - рекомендуемое время спустя которое следует повторить запрос
++ next_retry (number, optional) - рекомендуемое время спустя которое следует повторить запрос
 
 ### Status (enum[string])
 Состояние платежа или другой операции
 #### Members
-+ succeeded - успешен
++ success - успешен
 + pending - в процессе
 + canceled - отменен
 
 ### Payment (object)
 #### Properties
-+ paymentId: `b80357ac-0c7e-46f9-8058-5a9e9a993800` (string, required) - идентификатор платежа
++ payment_id: `b80357ac-0c7e-46f9-8058-5a9e9a993800` (string, required) - идентификатор платежа
 + status (Status, required) - состояние платежа
 + order (Order, required) - параметры заказа
-+ createdAt: `2017-08-11T17:05:07+03:00` (Timestamp, required) - время создания платежа
-+ sourceType (SourceType, required) - источник средств
++ metadata (object, optional) - дополнительные параметры, указанные магазином
++ created_at: `2017-08-11T17:05:07+03:00` (Timestamp, required) - время создания платежа
++ source_type (SourceType, required) - источник средств
 + charge (MonetaryAmount, optional) - сумма к списанию с источника средств. Выдается, если есть комиссия с плательщика
 + flow (FlowType, optional) - способ подтверждения платежа, если требуется дополнительное подтверждение
-+ redirectUrl (string, optional) - url для редиректа. Выдается при flow=redirect
-+ nextRetry: 1000 (number, optional)
-+ processedAt: `2017-08-11T17:10:07+03:00` (Timestamp, optional) - время успешного завершения платежа
++ redirect_url (string, optional) - url для редиректа. Выдается при flow=redirect
++ next_retry: 1000 (number, optional) - рекомендуемая пауза перед обновлением статуса в мс (для незавершенных платежей)
++ processed_at: `2017-08-11T17:10:07+03:00` (Timestamp, optional) - время успешного завершения платежа
 + income (MonetaryAmount, optional) - сумма к перечислению на счет мерчанта. Появляется после успешного завершения платежа
-+ cardAuthorization (object, optional) - результат авторизации карты. Может присутствовать при sourceType=BankCard.
++ card_authorization (object, optional) - результат авторизации карты. Может присутствовать при sourceType=BankCard.
 + paid (boolean, required) - платеж оплачен покупателем
 + captured (boolean, required) - оплата принята магазином
-+ receiptRegistered (Status, optional) - статус печати фискального чека
++ receipt_registered (Status, optional) - статус печати фискального чека
 + refunds (array[Refund], optional) - список возвратов
 
 ### Refund (object)
-+ refundId: `6c9da148-af45-4113-83fb-c35b54ee0b40` (string, required)
++ refund_id: `6c9da148-af45-4113-83fb-c35b54ee0b40` (string, required)
 + status (Status, required) - статус возврата
-+ paymentId: `b80357ac-0c7e-46f9-8058-5a9e9a993800` (string, required)
++ payment_id: `b80357ac-0c7e-46f9-8058-5a9e9a993800` (string, required)
++ metadata (object, optional) - дополнительные параметры, указанные магазином
 + amount (MonetaryAmount, required) - сумма возврата
-+ createdAt: `2017-08-11T17:05:07+03:00` (Timestamp, required)
-+ processedAt: `2017-08-11T17:10:07+03:00` (Timestamp, optional)
-+ nextRetry: 1000 (number, optional)
++ created_at: `2017-08-11T17:05:07+03:00` (Timestamp, required)
++ processed_at: `2017-08-11T17:10:07+03:00` (Timestamp, optional)
++ next_retry: 1000 (number, optional)
 
 ### Timestamp (string)
 Дата и время в формате ISO-8601:2004 timestamp
